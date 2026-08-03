@@ -113,10 +113,9 @@ body {
   font-size: 0.95rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
-
-  /* Truncate long titles cleanly */
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2; /* <--- Add this line here */
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
