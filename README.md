@@ -1,16 +1,16 @@
-# React + Vite
+# Product Explorer
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A searchable, paginated web interface built with React and Vite, fetching product data from the public DummyJSON REST API.
 
-Currently, two official plugins are available:
+## Features & Implementation
+- **Live Search with Debounce:** Connects to `/products/search` using a 350ms debounce timer to prevent firing requests on every keystroke.
+- **Server-Side Pagination:** Handles pagination directly via the API's `limit` and `skip` query parameters rather than client-side array slicing.
+- **Request Cancellation:** Uses native `AbortController` signals to cancel pending, out-of-order network requests when typing fast or changing pages.
+- **Boundary & Edge Case Handling:** Manages explicit states for loading feedback, failed network responses with retry options, missing thumbnail images, and zero-result search queries.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Setup & Running Locally
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/Soham51826/product-explorer.git](https://github.com/Soham51826/product-explorer.git)
+   cd product-explorer
