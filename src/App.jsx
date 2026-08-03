@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import SearchBar from './components/SearchBar';
 import ProductCard from './components/ProductCard';
+import ProductModal from './components/ProductModal';
 import Pagination from './components/Pagination';
 import './App.css';
 
@@ -11,16 +12,21 @@ function App() {
   const [total, setTotal] = useState(0);
   const [skip, setSkip] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
+  const [category, setCategory] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
-  const fetchProducts = useCallback(async (query, skipVal, signal) => {
+  const fetchProducts = useCallback(async (query, catVal, skipVal, signal) => {
     setLoading(true);
     setError(null);
 
     try {
       let url = `https://dummyjson.com/products?limit=${LIMIT}&skip=${skipVal}`;
-      if (query.trim() !== '') {
+      
+      if (catVal !== 'all') {
+        url = `https://dummyjson.com/products/category/${catVal}?limit=${LIMIT}&skip=${skipVal}`;
+      } else if (query.trim() !== '') {
         url = `https://dummyjson.com/products/search?q=${encodeURIComponent(query)}&limit=${LIMIT}&skip=${skipVal}`;
       }
 
@@ -43,13 +49,20 @@ function App() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetchProducts(searchQuery, skip, controller.signal);
+    fetchProducts(searchQuery, category, skip, controller.signal);
 
     return () => controller.abort();
-  }, [searchQuery, skip, fetchProducts]);
+  }, [searchQuery, category, skip, fetchProducts]);
 
   const handleSearch = useCallback((query) => {
     setSearchQuery(query);
+    setCategory('all');
+    setSkip(0);
+  }, []);
+
+  const handleCategorySelect = useCallback((cat) => {
+    setCategory(cat);
+    setSearchQuery('');
     setSkip(0);
   }, []);
 
@@ -59,42 +72,54 @@ function App() {
   return (
     <div className="app-container">
       <header className="header">
+        <div className="logo-badge">GDG Web Dev Recruitment</div>
         <h1>Product Explorer</h1>
-        <p className="subtitle">Browse and search DummyJSON catalog</p>
-        <SearchBar onSearch={handleSearch} />
+        <p className="subtitle">High-performance catalog interface powered by DummyJSON API</p>
+        
+        <SearchBar
+          onSearch={handleSearch}
+          activeCategory={category}
+          onSelectCategory={handleCategorySelect}
+        />
       </header>
 
       <main className="content">
         {loading && (
-  <div className="product-grid">
-    {Array.from({ length: LIMIT }).map((_, index) => (
-      <div key={index} className="skeleton-card">
-        <div className="skeleton-box skeleton-img" />
-        <div className="skeleton-box skeleton-title" />
-        <div className="skeleton-box skeleton-text" />
-      </div>
-    ))}
-  </div>
-)}
-        {loading && <div className="state-message">Loading products...</div>}
+          <div className="product-grid">
+            {Array.from({ length: LIMIT }).map((_, i) => (
+              <div key={i} className="skeleton-card">
+                <div className="skeleton-box skeleton-img" />
+                <div className="skeleton-box skeleton-title" />
+                <div className="skeleton-box skeleton-text" />
+              </div>
+            ))}
+          </div>
+        )}
 
         {error && (
           <div className="state-message error">
-            <p>Error: {error}</p>
-            <button onClick={() => fetchProducts(searchQuery, skip)}>Try Again</button>
+            <p>⚠️ {error}</p>
+            <button onClick={() => fetchProducts(searchQuery, category, skip)}>
+              Retry Request
+            </button>
           </div>
         )}
 
         {!loading && !error && products.length === 0 && (
           <div className="state-message">
-            No products found matching "{searchQuery}".
+            <h3>No products found</h3>
+            <p>Try searching for a different keyword or resetting filters.</p>
           </div>
         )}
 
         {!loading && !error && products.length > 0 && (
           <div className="product-grid">
             {products.map((item) => (
-              <ProductCard key={item.id} product={item} />
+              <ProductCard
+                key={item.id}
+                product={item}
+                onClick={setSelectedProduct}
+              />
             ))}
           </div>
         )}
@@ -107,6 +132,11 @@ function App() {
           onPageChange={(page) => setSkip((page - 1) * LIMIT)}
         />
       )}
+
+      <ProductModal
+        product={selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+      />
     </div>
   );
 }
