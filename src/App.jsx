@@ -65,6 +65,17 @@ function App() {
       </header>
 
       <main className="content">
+        {loading && (
+  <div className="product-grid">
+    {Array.from({ length: LIMIT }).map((_, index) => (
+      <div key={index} className="skeleton-card">
+        <div className="skeleton-box skeleton-img" />
+        <div className="skeleton-box skeleton-title" />
+        <div className="skeleton-box skeleton-text" />
+      </div>
+    ))}
+  </div>
+)}
         {loading && <div className="state-message">Loading products...</div>}
 
         {error && (
