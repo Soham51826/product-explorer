@@ -1,0 +1,103 @@
+import { useState, useEffect, useCallback } from 'react';
+import SearchBar from './components/SearchBar';
+import ProductCard from './components/ProductCard';
+import Pagination from './components/Pagination';
+import './App.css';
+
+const LIMIT = 12;
+
+function App() {
+  const [products, setProducts] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [skip, setSkip] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchProducts = useCallback(async (query, skipVal, signal) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      let url = `https://dummyjson.com/products?limit=${LIMIT}&skip=${skipVal}`;
+      if (query.trim() !== '') {
+        url = `https://dummyjson.com/products/search?q=${encodeURIComponent(query)}&limit=${LIMIT}&skip=${skipVal}`;
+      }
+
+      const res = await fetch(url, { signal });
+      if (!res.ok) {
+        throw new Error(`HTTP Error: ${res.status}`);
+      }
+
+      const data = await res.json();
+      setProducts(data.products);
+      setTotal(data.total);
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        setError(err.message || 'Failed to fetch products');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchProducts(searchQuery, skip, controller.signal);
+
+    return () => controller.abort();
+  }, [searchQuery, skip, fetchProducts]);
+
+  const handleSearch = useCallback((query) => {
+    setSearchQuery(query);
+    setSkip(0);
+  }, []);
+
+  const currentPage = Math.floor(skip / LIMIT) + 1;
+  const totalPages = Math.ceil(total / LIMIT);
+
+  return (
+    <div className="app-container">
+      <header className="header">
+        <h1>Product Explorer</h1>
+        <p className="subtitle">Browse and search DummyJSON catalog</p>
+        <SearchBar onSearch={handleSearch} />
+      </header>
+
+      <main className="content">
+        {loading && <div className="state-message">Loading products...</div>}
+
+        {error && (
+          <div className="state-message error">
+            <p>Error: {error}</p>
+            <button onClick={() => fetchProducts(searchQuery, skip)}>Try Again</button>
+          </div>
+        )}
+
+        {!loading && !error && products.length === 0 && (
+          <div className="state-message">
+            No products found matching "{searchQuery}".
+          </div>
+        )}
+
+        {!loading && !error && products.length > 0 && (
+          <div className="product-grid">
+            {products.map((item) => (
+              <ProductCard key={item.id} product={item} />
+            ))}
+          </div>
+        )}
+      </main>
+
+      {!loading && !error && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={(page) => setSkip((page - 1) * LIMIT)}
+        />
+      )}
+    </div>
+  );
+}
+
+export default App;
